@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "protein_ebm"
+version = "0.1.0"
+
+dependencies = [
+    "pytorch-lightning==2.5.1",
+    "torch==2.6.0",
+    "numpy==2.3.3",
+    "ml_collections==1.0.0",
+    "tensorboard==2.19.0",
+    "scipy==1.15.2",
+    "biopython==1.85",
+    "jupyter==1.1.1",
+    "einops==0.8.1",
+    "mdtraj==1.11.0",
+    "py3Dmol==2.4.2",
+    "pandas==2.2.3",
+    "matplotlib==3.10.1"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["protein_ebm"]
+
+[tool.setuptools.package-dir]
+protein_ebm = "protein_ebm"
+

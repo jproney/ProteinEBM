@@ -1,0 +1,54 @@
+diffuser:
+  min_b: 0.1
+  max_b: 20.0
+  coordinate_scaling: 0.1
+
+
+model:
+  direct_score: False
+  aux_score: True
+  diffuse_sidechain: False
+  use_self_conditioning: True
+  predict_sidechain: True
+  token_s: 256
+  token_z: 128
+  dim_fourier: 256
+  conditioning_transition_layers: 2
+  token_transformer_depth: 16
+  token_transformer_heads: 8
+  num_contact_embeddings: 2
+
+
+training:
+  run_name: "proteinebm_pretrained"  # Name for the experiment
+  batch_size: 1
+  max_epochs: 60
+  pad_to_max_threshold: 368
+  max_len: 500
+  val_check_interval: .25
+  learning_rate: .0001
+  gpus: 2  # Number of GPUs to use
+  num_nodes: 3
+  max_t: 1.0
+  log_dir: "../../training_logs/"
+  grad_accum: 6
+  self_conditioning: True
+  trans_score_weight: 3.0 
+  aux_score_weight: 0.25
+  sidechain_weight: 0.25
+  mask_sequence: False
+  drop_seq_prob: 0.1
+  zero_complex_chain_ids: False  
+  lr_scheduler:
+    pct_start: 0.3
+    div_factor: 25.0
+    final_div_factor: 10000
+
+data:
+  afdb_multiplier: 1.0
+  complex_multiplier: 1.0
+  train_data_path: ../../eval_data/training_data/cath_training_data.pt
+  afdb_data_path: ../../eval_data/training_data/afdb_training_data.pt
+  complex_data_path: ../../eval_data/training_data/complex_training_data.pt
+  validation_data_path: ../../eval_data/val_protein_data.pt
+  blocked_training_ids: ../data/data_lists/blocked_ids_combined_structure_split.txt
