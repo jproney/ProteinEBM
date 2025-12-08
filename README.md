@@ -149,7 +149,7 @@ python run_dynamics.py --pdb_file ../../eval_data/decoys/natives/2chf.pdb --conf
  --steps 100 --resample_steps 10 --min_steps 0 --ramp_start 0.5 --step_function_ramp --dt .001 --reverse_steps 200 \
  --resample_reverse_steps 20 --t_min .01 --t_max 1.0 --total_samples 400 --resample_total_samples 800 --temp_scaling 0.85714 \
  --resample_temp_scaling 1.0 --resample_noise_time 0.1 --scoring_time 0.1 --num_resample_rounds 4 --use_aux_score_initial \
- --batch_size 200 --resample_batch_size 10 --log_dir ../../dynamics/ --experiment_name 2chf_structure_prediction
+ --batch_size 134 --resample_batch_size 10 --log_dir ../../dynamics/ --experiment_name 2chf_structure_prediction
 ```
 
 After running these commands, you can analyzes the results in `notebooks/analyze_dynamics.ipynb`
