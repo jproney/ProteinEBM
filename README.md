@@ -113,6 +113,8 @@ This repository contains several notebooks for using the model and reproducing t
 - `notebooks/diffusion_inference.ipynb`: Runs reverse diffusion with the ProteinEBM to predict structures of arbitrary input proteins and visualize the results.
 - `notebooks/confbiasing.ipynb`: Uses ProteinEBM to compute the relative energies of open and closed states of LplA mutants, reproducing Figure S3.
 - `notebooks/rank_decoys.ipynb`: Analyzes the results of decoy ranking with ProteinEBM. See the Decoy Ranking section for detailed usage instructions.
+- `notebooks/analyze_dynamics.ipynb`: Analyzes the results of sampling trajectories ProteinEBM. See the Running Dynamics section for detailed usage instructions.
+
 
 ## Decoy Ranking
 
