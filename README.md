@@ -26,6 +26,8 @@ cd download_scripts
 ./download_eval_data.sh
 ```
 
+Note that this will take 40GB of space. Feel free to download a subset of these files.
+
 To parse the decoy dataset into the tensor data format used by ProteinEBM, do:
 
 ```
