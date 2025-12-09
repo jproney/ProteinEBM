@@ -11,7 +11,7 @@ conda create --name protebm python=3.11
 conda activate protebm
 
 git clone https://github.com/jproney/ProteinEBM
-cd ProteinEBM-public
+cd ProteinEBM
 pip install .
 ```
 
