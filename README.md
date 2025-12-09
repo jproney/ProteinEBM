@@ -10,7 +10,7 @@ To install in a new conda environment do:
 conda create --name protebm python=3.11
 conda activate protebm
 
-git clone https://github.com/jproney/ProteinEBM-public
+git clone https://github.com/jproney/ProteinEBM
 cd ProteinEBM-public
 pip install .
 ```
