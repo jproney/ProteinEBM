@@ -47,8 +47,8 @@ training:
 data:
   afdb_multiplier: 1.0
   complex_multiplier: 1.0
-  train_data_path: ../../eval_data/training_data/cath_training_data.pt
-  afdb_data_path: ../../eval_data/training_data/afdb_training_data.pt
-  complex_data_path: ../../eval_data/training_data/complex_training_data.pt
+  train_data_path: ../../training_data/cath_training_data.pt
+  afdb_data_path: ../../training_data/afdb_training_data.pt
+  complex_data_path: ../../training_data/complex_training_data.pt
   validation_data_path: ../../eval_data/val_protein_data.pt
   blocked_training_ids: ../data/data_lists/blocked_ids_combined_structure_split.txt
