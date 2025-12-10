@@ -1,6 +1,6 @@
 # ProteinEBM
 
-This repository houses the open source code for ProteinEBM! ProteinEBM uses denoising score matching to learn an approximation of the energy landscape $$E_\theta(x,s)$$ of a protein structure given its sequence. This has numerious applications, including structure prediction, simulation, and stability prediction. For more information, see our preprint.
+This repository houses the open source code for ProteinEBM! ProteinEBM uses denoising score matching to learn an approximation of the energy landscape $$E_\theta(x,s)$$ of a protein structure given its sequence. This has numerious applications, including structure prediction, simulation, and stability prediction. For more information, see our preprint: https://www.biorxiv.org/content/10.64898/2025.12.09.693073v1.
 
 ## Installation
 
