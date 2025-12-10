@@ -175,3 +175,15 @@ python train.py ../config/base_pretrain.yaml
 This will pretrain the model and save the results in `training_logs/`. Before running this, make sure to update `protein_ebm/config/base_pretrain.yaml` to correctly reflect your GPU setup.
 
 For info on finetuning models and generating new datasets, check back soon
+
+## Raw Results Files
+
+The raw results files used to produce the figures in the paper can be found at https://huggingface.co/jproney/ProteinEBM. The raw results files are:
+- rosetta_test_decoy_ranking_results.csv
+- proteinebm_sampling_results.csv
+- proteinebm_af2rank_sampling_results.csv
+- af2_sampling_results.csv
+- af3_sampling_results.csv
+- proteingym_stability_model1.csv
+- proteingym_stability_model2.csv
+
