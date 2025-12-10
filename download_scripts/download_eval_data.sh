@@ -20,6 +20,10 @@ wget -P ../eval_data/decoy_data/ https://huggingface.co/jproney/ProteinEBM/resol
 wget -P ../eval_data/decoy_data/ https://huggingface.co/jproney/ProteinEBM/resolve/main/rosettascore.txt
 wget -P ../eval_data/decoy_data/ https://huggingface.co/jproney/ProteinEBM/resolve/main/tmscore.txt
 
+# validation and test data for training loop
+wget -P ../eval_data/ https://huggingface.co/jproney/ProteinEBM/blob/main/val_protein_data.pt
+wget -P ../eval_data/ https://huggingface.co/jproney/ProteinEBM/blob/main/test_protein_data.pt
+
 # Fast Folder Structures
 mkdir ../eval_data/fastfolders
 wget -P ../eval_data/fastfolders http://pub.htmd.org/protein_thermodynamics_data/experimental_structures.tar.gz
