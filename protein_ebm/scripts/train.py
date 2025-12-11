@@ -416,7 +416,7 @@ class ProteinScoreMatchingTrainer(pl.LightningModule):
                     'mask': torch.ones(aatype.shape).cuda(),
                     'residue_idx': residue_idx.cuda(),
                     'chain_encoding': torch.zeros_like(residue_idx).cuda(),
-                    'external_contacts': torch.ones_like(residue_idx).cuda(), # one means no external contact
+                    'external_contacts': torch.ones_like(residue_idx).cuda() if getattr(self.config.model, 'num_contact_embeddings', 2) == 3 else torch.zeros_like(residue_idx).cuda(),
                     'selfcond_coords' : r_noisy.cuda(),
                     't' : getattr(self.config.training, 'eval_time', 0.15) * torch.ones(residue_idx.shape[0]).cuda()
                 }
@@ -811,8 +811,8 @@ class ProteinEBMDataModule(pl.LightningDataModule):
                 self.val_proteins['atom37_mask'],
                 self.val_proteins['idx'],
                 self.val_proteins['aatype'],
-                [torch.ones(r.shape[:-2]) for r in self.val_proteins['atom37']], 
-                [torch.ones_like(c) for c in self.val_proteins['contacts']], # one means no external contact
+                [torch.ones(r.shape[:-2]) for r in self.val_proteins['atom37']], #mask
+                [torch.ones_like(c) for c in self.val_proteins['contacts']] if getattr(self.config.model, 'num_contact_embeddings', 2) == 3 else [torch.zeros_like(c) for c in self.val_proteins['contacts']],
                 self.diffuser,
                 max_t=self.config.training.max_t,
                 chain_ids=self.val_proteins['chain_ids'],
