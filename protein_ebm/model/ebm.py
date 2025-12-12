@@ -30,6 +30,7 @@ class ProteinEBM(Module):
         """
         super().__init__()
 
+        self.config = config
         self.sequence_embedding = nn.Embedding(21, config.token_s)  # 20 amino acids + 1 for missing/masked
         self.diffuser = diffuser
         self.direct_score = getattr(config, 'direct_score', False) # whether to predict the score directly without the energy parameterization
