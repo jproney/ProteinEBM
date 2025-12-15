@@ -30,7 +30,9 @@ parser.add_argument('--quad_ramp', action='store_true', help='Use quadratic ramp
 parser.add_argument('--step_function_ramp', action='store_true', help='Switch immediately from min_steps to steps at ramp_start (no gradual ramping)')
 parser.add_argument('--interval_schedule', type=int, default=-1, help='Alternate between min_steps and steps every N reverse steps (default: no alternating)')
 parser.add_argument('--last_t_steps', type=int, default=-1, help='Number of dynamics steps for the last time step')
+parser.add_argument('--save_stride', type=int, default=1, help='Save every Nth frame from the last timepoint (default: 1, save all frames)')
 parser.add_argument('--scoring_time', type=float, default=-1, help='Time level for additional energy scoring on last time step (default: no scoring)')
+parser.add_argument('--log_dynamics_energies', action='store_true', help='Log energies at each dynamics step instead of rescoring (uses energies from last timepoint)')
 parser.add_argument('--load_previous', type=str, default=None, help='Path to previous dynamics_trajectory.pt file to load and resample from')
 parser.add_argument('--rescore_previous', action='store_true', help='Rescore the previous trajectory')
 parser.add_argument('--resample_noise_time', type=float, default=0.2, help='Time level to noise resampled structures back to (default: 0.2)')
@@ -57,6 +59,7 @@ parser.add_argument('--metropolis', action='store_true', help='Use Metropolis-Ha
 parser.add_argument('--use_aux_score_initial', action='store_true', help='Use auxiliary score for sampling in first round only')
 parser.add_argument('--use_aux_score_resample', action='store_true', help='Use auxiliary score for sampling in rounds 2+ only')
 parser.add_argument('--pdb_file', type=str, required=True, help='Input PDB file')
+parser.add_argument('--start_unfolded', action='store_true', help='Start from random unfolded backbone instead of PDB structure')
 parser.add_argument('--log_dir', type=str, default='../../eval/dynamics/', help='Base directory for saving experiment results')
 args = parser.parse_args()
 
@@ -268,7 +271,7 @@ def cluster_structures_for_resampling(final_structures, min_traj_nrg, min_traj_i
 
 from Bio.PDB import PDBParser
 from Bio.PDB.Polypeptide import is_aa
-from protein_ebm.data.protein_utils import residues_to_features
+from protein_ebm.data.protein_utils import residues_to_features, generate_random_backbone_coords, restypes
 
 #Load the structure
 parser = PDBParser(QUIET=True)
@@ -282,6 +285,14 @@ residue_mask = torch.ones(atom_positions.shape[0])
 aatype = torch.tensor(aatype, dtype=torch.long)
 chain_encoding = torch.zeros_like(aatype)
 contacts = torch.zeros(aatype.shape, dtype=torch.long)
+
+# Store sequence for unfolded structure generation if requested
+sequence = None
+if args.start_unfolded:
+    print("Will generate random unfolded backbone structures for each protein in batch")
+    # Convert aatype indices to sequence string
+    sequence = "".join([restypes[a.item()] for a in aatype])
+    print(f"Sequence: {sequence}")
 
 # Load and resample from previous run if specified
 if args.load_previous:
@@ -405,7 +416,19 @@ for round_idx in range(args.num_resample_rounds):
     print(f"Round {round_idx + 1}: Generating {current_total_samples} total samples in {current_num_batches} batches of size {bsize}")
     
     # Setup coordinates with appropriate batch size
-    ca_coords = center_random_augmentation(atom_positions[...,1,:].unsqueeze(0).expand([bsize,-1,-1]), torch.ones([bsize, atom_positions.shape[0]])).view([bsize,-1,3])
+    if args.start_unfolded:
+        # Generate different random unfolded structures for each protein in the batch
+        print(f"Generating {bsize} different random unfolded structures...")
+        batch_unfolded_coords = []
+        for i in range(bsize):
+            unfolded_coords, log_prob = generate_random_backbone_coords(sequence, uniform_sampling=True)
+            batch_unfolded_coords.append(unfolded_coords[:, 1, :])  # CA atoms only
+        ca_coords = torch.stack(batch_unfolded_coords).view([bsize, -1, 3])
+        # Center the structures
+        ca_coords = center_random_augmentation(ca_coords, torch.ones([bsize, atom_positions.shape[0]])).view([bsize, -1, 3])
+        print(f"Generated {bsize} different unfolded structures")
+    else:
+        ca_coords = center_random_augmentation(atom_positions[...,1,:].unsqueeze(0).expand([bsize,-1,-1]), torch.ones([bsize, atom_positions.shape[0]])).view([bsize,-1,3])
 
     # Update t_max for subsequent resampling rounds
     if round_idx > 0:  # Rounds 2+ (0-indexed)
@@ -451,7 +474,7 @@ for round_idx in range(args.num_resample_rounds):
     # Initialize for this round
     all_pos = [] 
     all_t0 = []
-    all_scoring_energies = [[] for _ in range(current_num_batches)] if args.scoring_time != -1 else None
+    all_scoring_energies = [[] for _ in range(current_num_batches)] if (args.scoring_time != -1 or args.log_dynamics_energies) else None
     score = None
 
     with torch.no_grad():
@@ -503,6 +526,7 @@ for round_idx in range(args.num_resample_rounds):
                 print(f"Round {round_idx + 1} Batch {b} Time {t}")
                 pos_log = []
                 t0_log = []
+                energy_log = [] if args.log_dynamics_energies else None
 
 
                 # Calculate steps for this time point with optional ramping or interval scheduling
@@ -590,6 +614,10 @@ for round_idx in range(args.num_resample_rounds):
 
                         pos_log.append(pos_t.detach().cpu())
                         t0_log.append(pos_allatom.detach().cpu())
+                        
+                        # Log dynamics energies if requested
+                        if args.log_dynamics_energies:
+                            energy_log.append(energy.detach().cpu())
 
                     else:
 
@@ -627,15 +655,35 @@ for round_idx in range(args.num_resample_rounds):
                             pos_t = pos_t + diffuser.drift_coef(pos_t, t-dt) * dt + diffuser.diffusion_coef(t-dt) * torch.sqrt(torch.tensor(dt)) * torch.randn_like(pos_t) / diffuser.config.coordinate_scaling
 
                         pos_log.append(pos_t.detach().cpu())
+                        
+                        # Log dynamics energies if requested
+                        if args.log_dynamics_energies:
+                            energy_log.append(energy.detach().cpu())
 
                         print(f"Step {i} Energy {out['energy']}")
+                
+                # Log dynamics energies from last timepoint if requested
+                if args.log_dynamics_energies and t == reverse_steps[-1] and energy_log:
+                    # Apply save stride to energy log as well
+                    if args.save_stride > 1:
+                        energy_log_strided = energy_log[::args.save_stride]
+                        all_scoring_energies[b].append(torch.stack(energy_log_strided))
+                        print(f"Logged {len(energy_log_strided)}/{len(energy_log)} dynamics energies from last timepoint (stride={args.save_stride})")
+                    else:
+                        all_scoring_energies[b].append(torch.stack(energy_log))
+                        print(f"Logged {len(energy_log)} dynamics energies from last timepoint")
 
                 # Perform energy scoring on last time level if requested
                 if args.scoring_time != -1 and t == reverse_steps[-1]:
                     print(f"Performing energy scoring at time {args.scoring_time}")
                     scoring_energies = []
                     
-                    for pos_step in pos_log:
+                    # Apply save stride to positions being scored
+                    pos_log_to_score = pos_log[::args.save_stride] if args.save_stride > 1 else pos_log
+                    if args.save_stride > 1:
+                        print(f"Scoring {len(pos_log_to_score)}/{len(pos_log)} frames (stride={args.save_stride})")
+                    
+                    for pos_step in pos_log_to_score:
                         # Create input features for energy scoring
                         scoring_input_feats = {
                             'r_noisy': pos_step.cuda(),
@@ -656,8 +704,17 @@ for round_idx in range(args.num_resample_rounds):
                     all_scoring_energies[b].append(torch.stack(scoring_energies))
                     print(f"Scored {len(scoring_energies)} steps with energies: {[e.mean().item() for e in scoring_energies[:3]]}...")
 
-            all_pos.append(torch.stack(pos_log))
-            all_t0.append(torch.stack(t0_log))
+            # Apply save stride to reduce number of saved frames from last timepoint
+            if args.save_stride > 1:
+                pos_log_strided = pos_log[::args.save_stride]
+                t0_log_strided = t0_log[::args.save_stride]
+                print(f"Applied save_stride={args.save_stride}: saving {len(pos_log_strided)}/{len(pos_log)} frames from last timepoint")
+            else:
+                pos_log_strided = pos_log
+                t0_log_strided = t0_log
+            
+            all_pos.append(torch.stack(pos_log_strided))
+            all_t0.append(torch.stack(t0_log_strided))
 
     # Store results for this round
     all_rounds_pos.append(all_pos)
@@ -777,6 +834,15 @@ if args.resample_temp_scaling != -1:
 # Add clustering resampling options
 save_dict['cluster_resampling_firstround'] = args.cluster_resampling_firstround
 save_dict['cluster_resampling_allrounds'] = args.cluster_resampling_allrounds
+
+# Add unfolded state info
+save_dict['start_unfolded'] = args.start_unfolded
+
+# Add dynamics energy logging info
+save_dict['log_dynamics_energies'] = args.log_dynamics_energies
+
+# Add save stride info
+save_dict['save_stride'] = args.save_stride
 
 if args.load_previous:
     rescore_info = ", rescored with scoring model" if args.rescore_previous else ""
