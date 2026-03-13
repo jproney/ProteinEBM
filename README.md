@@ -182,6 +182,7 @@ To download the pretraining data form ProteinEBM, you can do
 cd download_scripts
 ./download_data.sh
 ```
+The training data are stored at: https://zenodo.org/records/17871696.
 
 This will populate `weights/training_data` with three zipped data files. You well need about 10GB of space for the compressed data files, and about 50GB to uncompress them. After downloading and uncompressing the data files, you can run:
 
