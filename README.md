@@ -51,6 +51,8 @@ The `download_weights.sh` script will download the parameters for 4 models, all 
 - `model_5_expert_pretrained.pt`: Expert model pretrained with only `t<.15`. Used in refinement stage in structure prediction protocol.
 - `model_6_expert_frozen_1m_md.pt`: **This is ProteinEBM-x from the paper**. Derived from Model 5 finetuned on 1M frames of MD with middle layers frozen. Used for decoy ranking, stability prediction, conformational biasing, direct folding simulation, and sampling the `t<0.1` noise levels during fast-folder Langevin annealing. **Use this checkpoint for scoring applications.**
 
+All of these checkpoints are stored at https://huggingface.co/jproney/ProteinEBM/tree/main.
+
 ## Loading the Model and Scoring Structures
 
 Here is a minimal example of loading a model, parsing a protein from a PDB, and computing an energy:
